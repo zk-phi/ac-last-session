@@ -1,19 +1,73 @@
-;; ac-last-sessions
+;;; ac-last-sessions.el -- Auto-complete source to complete words across sessions
+
+;; Copyright (C) 2017- zk_phi
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2 of the License, or
+;; (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with this program; if not, write to the Free Software
+;; Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+
+;; Author: zk_phi
+;; URL: http://hins11.yu-yake.com/
+;; Version: 0.0.0
+;; Package-Requires: ()
+
+;;; Commentary:
+
+;; * description
+;;
+;; This package provides a auto-complete source
+;; `ac-source-last-sessions', which is like
+;; `ac-source-words-in-same-mode-buffers' but saved across sessions.
+;;
+;; * Installation
+;;
+;; Put this scrpit into a 'load-path'ed directory, and load it in your
+;; init file.
+;;
+;;   (require 'ac-last-sessions)
+;;
+;; Set `ac-last-sessions-save-file'.
+;;
+;;   (setq ac-last-sessions-save-file "~/.emacs.d/.ac-last-sessions")
+;;
+;; And add hooks to save/load the words.
+;;
+;;   (add-hook 'emacs-startup-hook 'ac-last-sessions-load-completions)
+;;   (add-hook 'kill-emacs-hook 'ac-last-sessions-save-completions)
+;;
+;; Then `ac-source-last-sessions' is available.
+;;
+;;   (push 'ac-source-last-sessions ac-sources)
+
+;;; Change Log:
+
+;; 0.0.0 text release
+
+;;; Code:
 
 (require 'auto-complete)
 
 (defgroup ac-last-sessions nil
-  "auto-complete source to complete words-in-same-mode-buffers in
-the last session."
+  "Auto-complete source to complete words across sessions."
   :group 'auto-complete)
 
 (defcustom ac-last-sessions-save-file nil
-  "Filename to save ac-words-in-same-mode-buffers candidates."
+  "Filename to save words in."
   :type 'string
   :group 'ac-last-sessions)
 
 (defcustom ac-last-sessions-saved-words 10000
-  "Number of words (per language) to keep in the history."
+  "Number of words (per language) to save."
   :type 'integer
   :group 'ac-last-sessions)
 
@@ -22,7 +76,8 @@ the last session."
   :type 'integer
   :group 'ac-last-sessions)
 
-(defvar ac-last-sessions--candidates nil)
+(defvar ac-last-sessions--candidates nil
+  "Store words in the form (MODE . (WORD ...)).")
 
 (defun ac-last-sessions--filter (pred lst)
   "Destructive filter function."
@@ -36,6 +91,7 @@ the last session."
   lst)
 
 (defun ac-last-sessions-load-completions ()
+  "Load saved words from `ac-last-sessions-save-file'."
   (when (and ac-last-sessions-save-file
              (file-exists-p ac-last-sessions-save-file))
     (with-temp-buffer
@@ -45,6 +101,7 @@ the last session."
     (message "ac-last-sessions: last session loaded.")))
 
 (defun ac-last-sessions-save-completions ()
+  "Save words in `ac-last-sessions-save-file'."
   (let ((word-regexp
          (format "\\(?:\\s_\\|\\sw\\)\\{%d,\\}" ac-last-sessions-minimun-word-length)))
     (when ac-last-sessions-save-file
@@ -72,3 +129,5 @@ the last session."
   '((candidates . (assoc-default major-mode ac-last-sessions--candidates))))
 
 (provide 'ac-last-sessions)
+
+;;; ac-last-sessions.el ends here
