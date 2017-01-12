@@ -17,6 +17,11 @@ the last session."
   :type 'integer
   :group 'ac-last-sessions)
 
+(defcustom ac-last-sessions-minimun-word-length 5
+  "Minimum length of word to save."
+  :type 'integer
+  :group 'ac-last-sessions)
+
 (defvar ac-last-sessions--candidates nil)
 
 (defun ac-last-sessions--filter (pred lst)
@@ -40,26 +45,28 @@ the last session."
     (message "ac-last-sessions: last session loaded.")))
 
 (defun ac-last-sessions-save-session ()
-  (when ac-last-sessions-save-file
-    (dolist (buf (buffer-list))
-      (with-current-buffer buf
-        (let ((cell (assq major-mode ac-last-sessions--candidates))
-              (words (ac-last-sessions--filter
-                      (lambda (x) (string-match "\\(?:\\s_\\|\\sw\\)\\{5,\\}" x))
-                      (split-string
-                       (buffer-substring-no-properties (point-min) (point-max))
-                       "\\(?:^\\|\\_>\\).*?\\(?:\\_<\\|$\\)"))))
-          (if cell
-              (nconc (cdr cell) words)
-            (push (cons major-mode words) ac-last-sessions--candidates)))))
-    (dolist (pair ac-last-sessions--candidates)
-      (setcdr pair (delete-dups (cdr pair)))
-      (let ((pair (nthcdr (1- ac-last-sessions-saved-words) ac-last-sessions--candidates)))
-        (when pair (setcdr pair nil))))
-    (with-temp-buffer
-      (prin1 ac-last-sessions--candidates (current-buffer))
-      (write-region (point-min) (point-max) ac-last-sessions-save-file))
-    (message "ac-last-sessions: session saved.")))
+  (let ((word-regexp
+         (format "\\(?:\\s_\\|\\sw\\)\\{%d,\\}" ac-last-sessions-minimun-word-length)))
+    (when ac-last-sessions-save-file
+      (dolist (buf (buffer-list))
+        (with-current-buffer buf
+          (let ((cell (assq major-mode ac-last-sessions--candidates))
+                (words (ac-last-sessions--filter
+                        (lambda (x) (string-match word-regexp x))
+                        (split-string
+                         (buffer-substring-no-properties (point-min) (point-max))
+                         "\\(?:^\\|\\_>\\).*?\\(?:\\_<\\|$\\)"))))
+            (if cell
+                (nconc (cdr cell) words)
+              (push (cons major-mode words) ac-last-sessions--candidates)))))
+      (dolist (pair ac-last-sessions--candidates)
+        (setcdr pair (delete-dups (cdr pair)))
+        (let ((pair (nthcdr (1- ac-last-sessions-saved-words) ac-last-sessions--candidates)))
+          (when pair (setcdr pair nil))))
+      (with-temp-buffer
+        (prin1 ac-last-sessions--candidates (current-buffer))
+        (write-region (point-min) (point-max) ac-last-sessions-save-file))
+      (message "ac-last-sessions: session saved."))))
 
 (ac-define-source last-sessions
   '((candidates . (assoc-default major-mode ac-last-sessions--candidates))))
