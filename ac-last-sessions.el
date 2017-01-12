@@ -35,7 +35,7 @@ the last session."
         (setcdr tmp (cddr tmp)))))
   lst)
 
-(defun ac-last-sessions-load-saved-session ()
+(defun ac-last-sessions-load-completions ()
   (when (and ac-last-sessions-save-file
              (file-exists-p ac-last-sessions-save-file))
     (with-temp-buffer
@@ -44,7 +44,7 @@ the last session."
       (setq ac-last-sessions--candidates (read (current-buffer))))
     (message "ac-last-sessions: last session loaded.")))
 
-(defun ac-last-sessions-save-session ()
+(defun ac-last-sessions-save-completions ()
   (let ((word-regexp
          (format "\\(?:\\s_\\|\\sw\\)\\{%d,\\}" ac-last-sessions-minimun-word-length)))
     (when ac-last-sessions-save-file
