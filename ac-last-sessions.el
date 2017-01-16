@@ -76,8 +76,15 @@
   :type 'integer
   :group 'ac-last-sessions)
 
+(defcustom ac-last-sessions-major-modes '(prog-mode)
+  "List of major-modes to enable saving sessions."
+  :type '(list symbol)
+  :group 'ac-last-sessions)
+
 (defvar ac-last-sessions--candidates nil
   "Store words in the form (MODE . (WORD ...)).")
+
+;; * utils
 
 (defun ac-last-sessions--filter (pred lst)
   "Destructive filter function."
@@ -85,10 +92,21 @@
     (setq lst (cdr lst)))
   (let ((tmp lst))
     (while (cdr tmp)
-      (if (funcall pred(cadr tmp))
+      (if (funcall pred (cadr tmp))
           (setq tmp (cdr tmp))
         (setcdr tmp (cddr tmp)))))
   lst)
+
+(defun ac-last-sessions--some (pred lst)
+  "Return non-nil if some of elements in LST satisfies PRED. PRED
+is considered as a pure function."
+  (let ((res nil))
+    (while (and (not res) lst)
+      (when (funcall pred (pop lst))
+        (setq res t)))
+    res))
+
+;; * core
 
 (defun ac-last-sessions-load-completions ()
   "Load saved words from `ac-last-sessions-save-file'."
@@ -107,15 +125,16 @@
     (when ac-last-sessions-save-file
       (dolist (buf (buffer-list))
         (with-current-buffer buf
-          (let ((cell (assq major-mode ac-last-sessions--candidates))
-                (words (ac-last-sessions--filter
-                        (lambda (x) (string-match word-regexp x))
-                        (split-string
-                         (buffer-substring-no-properties (point-min) (point-max))
-                         "\\(?:^\\|\\_>\\).*?\\(?:\\_<\\|$\\)"))))
-            (if cell
-                (nconc (cdr cell) words)
-              (push (cons major-mode words) ac-last-sessions--candidates)))))
+          (when (ac-last-sessions--some 'derived-mode-p ac-last-sessions-major-modes)
+            (let ((cell (assq major-mode ac-last-sessions--candidates))
+                  (words (ac-last-sessions--filter
+                          (lambda (x) (string-match word-regexp x))
+                          (split-string
+                           (buffer-substring-no-properties (point-min) (point-max))
+                           "\\(?:^\\|\\_>\\).*?\\(?:\\_<\\|$\\)"))))
+              (if cell
+                  (nconc (cdr cell) words)
+                (push (cons major-mode words) ac-last-sessions--candidates))))))
       (dolist (pair ac-last-sessions--candidates)
         (setcdr pair (delete-dups (cdr pair)))
         (let ((pair (nthcdr (1- ac-last-sessions-saved-words) ac-last-sessions--candidates)))
