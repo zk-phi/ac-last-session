@@ -71,8 +71,13 @@
   :type 'integer
   :group 'ac-last-sessions)
 
-(defcustom ac-last-sessions-minimun-word-length 5
+(defcustom ac-last-sessions-minimun-word-length 4
   "Minimum length of word to save."
+  :type 'integer
+  :group 'ac-last-sessions)
+
+(defcustom ac-last-sessions-maximum-word-length 20
+  "Maximuim length of word to save."
   :type 'integer
   :group 'ac-last-sessions)
 
@@ -121,7 +126,8 @@ is considered as a pure function."
 (defun ac-last-sessions-save-completions ()
   "Save words in `ac-last-sessions-save-file'."
   (let ((word-regexp
-         (format "\\(?:\\s_\\|\\sw\\)\\{%d,\\}" ac-last-sessions-minimun-word-length)))
+         (format "\\(?:\\s_\\|\\sw\\)\\{%d,%d\\}"
+                 ac-last-sessions-minimun-word-length ac-last-sessions-maximum-word-length)))
     (when ac-last-sessions-save-file
       (dolist (buf (buffer-list))
         (with-current-buffer buf
