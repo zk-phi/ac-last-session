@@ -83,7 +83,7 @@
 
 (defcustom ac-last-sessions-major-modes '(prog-mode)
   "List of major-modes to enable saving sessions."
-  :type '(list symbol)
+  :type '(repeat symbol)
   :group 'ac-last-sessions)
 
 (defvar ac-last-sessions--candidates nil
